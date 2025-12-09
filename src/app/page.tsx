@@ -88,18 +88,13 @@ export default function Home() {
             {preview.image && (
               <>
                 <p className="text-gray-600">Image:</p>
-                <img src={preview.image} alt="Image" width={500} height={300} />
+                <img src={preview.image} alt="Image" />
               </>
             )}
             {preview.screenshot && (
               <>
                 <p className="text-gray-600">Screenshot:</p>
-                <img
-                  src={preview.screenshot}
-                  alt="Screenshot"
-                  width={500}
-                  height={300}
-                />
+                <img src={preview.screenshot} alt="Screenshot" />
               </>
             )}
           </div>
