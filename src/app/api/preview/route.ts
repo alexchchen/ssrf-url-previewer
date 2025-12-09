@@ -3,6 +3,10 @@ import * as cheerio from "cheerio";
 import puppeteer from "puppeteer";
 import dns from "dns/promises";
 
+const SCREENSHOT_WIDTH = 1800;
+const SCREENSHOT_HEIGHT = 992;
+const NAVIGATION_TIMEOUT_MS = 15000;
+
 export async function POST(request: NextRequest) {
   try {
     const { url: rawUrl } = await request.json();
@@ -58,10 +62,13 @@ export async function POST(request: NextRequest) {
       });
       try {
         const page = await browser.newPage();
-        await page.setViewport({ width: 1800, height: 992 });
+        await page.setViewport({
+          width: SCREENSHOT_WIDTH,
+          height: SCREENSHOT_HEIGHT,
+        });
         await page.goto(url.toString(), {
           waitUntil: "networkidle2",
-          timeout: 15000,
+          timeout: NAVIGATION_TIMEOUT_MS,
         });
         const buffer = (await page.screenshot({
           fullPage: false,
