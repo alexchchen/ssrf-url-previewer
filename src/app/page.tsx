@@ -7,19 +7,21 @@ import { useState } from "react";
 
 type URLPreview = {
   url: string;
+  status: number;
   title: string | null;
   description: string | null;
   image: string | null;
   screenshot: string | null;
-  domain: string;
 };
 
 export default function Home() {
   const [preview, setPreview] = useState<URLPreview | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (url: string) => {
     setIsLoading(true);
+    setError("");
 
     try {
       const res = await fetch("/api/preview", {
@@ -37,20 +39,19 @@ export default function Home() {
 
       const data = await res.json();
 
-      const urlObject = new URL(data.url || url);
-
       const previewData: URLPreview = {
         url: data.url || url,
+        status: data.status,
         title: data.title ?? null,
         description: data.description ?? null,
         image: data.image ?? null,
         screenshot: data.screenshot ?? null,
-        domain: urlObject.hostname.replace("www.", ""),
       };
 
       setPreview(previewData);
     } catch (err) {
       console.error(err);
+      setError("Failed to load preview. Please check the URL and try again.");
       setPreview(null);
     } finally {
       setIsLoading(false);
@@ -68,13 +69,22 @@ export default function Home() {
             image.
           </p>
         </div>
+
         <URLInput onSubmit={handleSubmit} isLoading={isLoading} />
+
+        {error && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
+        {/* TODO: Display the output nicely */}
         {preview && (
-          <div className="mt-12">
-            <p className="text-gray-600">Domain: {preview.domain}</p>
+          <div className="mt-6">
+            <p className="text-gray-600">URL: {preview.url}</p>
+            <p className="text-gray-600">Status: {preview.status}</p>
             <p className="text-gray-600">Title: {preview.title}</p>
             <p className="text-gray-600">Description: {preview.description}</p>
-            <p className="text-gray-600">URL: {preview.url}</p>
             {preview.image && (
               <>
                 <p className="text-gray-600">Image:</p>
