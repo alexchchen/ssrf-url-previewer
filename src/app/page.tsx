@@ -70,6 +70,14 @@ export default function Home() {
     }
   };
 
+  const formatDnsRecords = (records: string[] | string[][] | null): string => {
+    if (!records) return "N/A";
+    if (records.length > 0) {
+      return records.flat().join(", ");
+    }
+    return String(records);
+  };
+
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 font-sans">
       <Header />
@@ -103,12 +111,7 @@ export default function Home() {
               <ul className="list-disc list-inside">
                 {Object.entries(preview.dnsRecords).map(([type, records]) => (
                   <li key={type} className="text-gray-600">
-                    {type}:{" "}
-                    {records
-                      ? Array.isArray(records) && records.length > 0
-                        ? records.flat().join(", ")
-                        : records
-                      : "N/A"}
+                    {type}: {formatDnsRecords(records)}
                   </li>
                 ))}
               </ul>
