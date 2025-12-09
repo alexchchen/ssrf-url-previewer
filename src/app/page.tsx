@@ -8,6 +8,10 @@ import { useState } from "react";
 type URLPreview = {
   url: string;
   status: number;
+  contentType: string;
+  ipv4: string | null;
+  ipv6: string | null;
+  dnsRecords: Record<string, string[] | string[][] | null>;
   title: string | null;
   description: string | null;
   image: string | null;
@@ -42,6 +46,14 @@ export default function Home() {
       const previewData: URLPreview = {
         url: data.url || url,
         status: data.status,
+        contentType: data.contentType,
+        ipv4: data.ipv4 || null,
+        ipv6: data.ipv6 || null,
+        dnsRecords: data.dnsRecords || {
+          A: null,
+          AAAA: null,
+          CNAME: null,
+        },
         title: data.title ?? null,
         description: data.description ?? null,
         image: data.image ?? null,
@@ -83,6 +95,24 @@ export default function Home() {
           <div className="mt-6">
             <p className="text-gray-600">URL: {preview.url}</p>
             <p className="text-gray-600">Status: {preview.status}</p>
+            <p className="text-gray-600">Content Type: {preview.contentType}</p>
+            <p className="text-gray-600">IPv4: {preview.ipv4 || "N/A"}</p>
+            <p className="text-gray-600">IPv6: {preview.ipv6 || "N/A"}</p>
+            <div className="mt-4">
+              <h3 className="text-gray-800 font-semibold mb-2">DNS Records:</h3>
+              <ul className="list-disc list-inside">
+                {Object.entries(preview.dnsRecords).map(([type, records]) => (
+                  <li key={type} className="text-gray-600">
+                    {type}:{" "}
+                    {records
+                      ? Array.isArray(records) && records.length > 0
+                        ? records.flat().join(", ")
+                        : records
+                      : "N/A"}
+                  </li>
+                ))}
+              </ul>
+            </div>
             <p className="text-gray-600">Title: {preview.title}</p>
             <p className="text-gray-600">Description: {preview.description}</p>
             {preview.image && (

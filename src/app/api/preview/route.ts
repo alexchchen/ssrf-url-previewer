@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import puppeteer from "puppeteer";
+import dns from "dns/promises";
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,11 +76,38 @@ export async function POST(request: NextRequest) {
       screenshot = null;
     }
 
+    let ipv4 = null;
+    let ipv6 = null;
+    try {
+      ipv4 = (await dns.lookup(url.hostname, { family: 4 })).address;
+    } catch {}
+    try {
+      ipv6 = (await dns.lookup(url.hostname, { family: 6 })).address;
+    } catch {}
+
+    const dnsRecords: Record<string, string[] | string[][] | null> = {
+      A: null,
+      AAAA: null,
+      CNAME: null,
+    };
+    try {
+      dnsRecords.A = await dns.resolve4(url.hostname);
+    } catch {}
+    try {
+      dnsRecords.AAAA = await dns.resolve6(url.hostname);
+    } catch {}
+    try {
+      dnsRecords.CNAME = await dns.resolveCname(url.hostname);
+    } catch {}
+
     return NextResponse.json(
       {
         url: url.toString(),
         status: response.status,
         contentType,
+        ipv4,
+        ipv6,
+        dnsRecords,
         title,
         description,
         image,
