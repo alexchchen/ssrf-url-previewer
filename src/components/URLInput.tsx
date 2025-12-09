@@ -1,10 +1,10 @@
 import { useState, FormEvent } from "react";
 import { Link2, ArrowRight } from "lucide-react";
 
-interface URLInputProps {
+type URLInputProps = {
   onSubmit: (url: string) => void;
   isLoading: boolean;
-}
+};
 
 export function URLInput({ onSubmit, isLoading }: URLInputProps) {
   const [url, setUrl] = useState("");
@@ -14,7 +14,9 @@ export function URLInput({ onSubmit, isLoading }: URLInputProps) {
 
     if (!url.trim()) return;
 
-    onSubmit(url);
+    const formattedURL = url.match(/^https?:\/\//) ? url : `https://${url}`;
+
+    onSubmit(formattedURL);
   };
 
   return (
@@ -27,7 +29,7 @@ export function URLInput({ onSubmit, isLoading }: URLInputProps) {
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="Enter a URL (e.g., github.com, youtube.com, reddit.com)"
+          placeholder="Enter a URL (e.g., github.com, youtube.com, google.com)"
           className="text-black w-full pl-12 pr-32 py-4 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all bg-white shadow-sm"
           disabled={isLoading}
         />

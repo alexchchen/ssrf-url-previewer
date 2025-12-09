@@ -1,0 +1,97 @@
+import { NextRequest, NextResponse } from "next/server";
+import * as cheerio from "cheerio";
+import puppeteer from "puppeteer";
+
+export async function POST(request: NextRequest) {
+  try {
+    const { url: rawUrl } = await request.json();
+
+    if (!rawUrl || typeof rawUrl !== "string") {
+      return NextResponse.json(
+        { error: "Missing or invalid `url`." },
+        { status: 400 }
+      );
+    }
+
+    const url = new URL(rawUrl);
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      redirect: "follow",
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+
+    if (!contentType.includes("text/html")) {
+      return NextResponse.json(
+        {
+          url: url.toString(),
+          contentType,
+          status: response.status,
+          title: null,
+          description: null,
+          image: null,
+          screenshot: null,
+        },
+        { status: 200 }
+      );
+    }
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const ogTitle = $('meta[property="og:title"]').attr("content");
+    const ogDescription = $('meta[property="og:description"]').attr("content");
+    const ogImage = $('meta[property="og:image"]').attr("content");
+
+    const title = ogTitle || $("title").first().text() || null;
+    const description =
+      ogDescription || $('meta[name="description"]').attr("content") || null;
+    const image =
+      ogImage || $('meta[name="twitter:image"]').attr("content") || null;
+
+    let screenshot: string | null = null;
+    try {
+      const browser = await puppeteer.launch({
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+      try {
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1800, height: 992 });
+        await page.goto(url.toString(), {
+          waitUntil: "networkidle2",
+          timeout: 15000,
+        });
+        const buffer = (await page.screenshot({
+          fullPage: false,
+          type: "png",
+        })) as Buffer;
+        screenshot = `data:image/png;base64,${buffer.toString("base64")}`;
+      } finally {
+        await browser.close();
+      }
+    } catch (error) {
+      console.error("Screenshot capture failed:", error);
+      screenshot = null;
+    }
+
+    return NextResponse.json(
+      {
+        url: url.toString(),
+        status: response.status,
+        contentType,
+        title,
+        description,
+        image,
+        screenshot,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Preview API error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch URL preview." },
+      { status: 500 }
+    );
+  }
+}
