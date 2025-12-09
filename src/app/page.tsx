@@ -1,65 +1,138 @@
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
+import { Header } from "@/components/Header";
+import { URLInput } from "@/components/URLInput";
+import { useState } from "react";
+
+type URLPreview = {
+  url: string;
+  status: number;
+  contentType: string;
+  ipv4: string | null;
+  ipv6: string | null;
+  dnsRecords: Record<string, string[] | string[][] | null>;
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  screenshot: string | null;
+};
 
 export default function Home() {
+  const [preview, setPreview] = useState<URLPreview | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (url: string) => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/preview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to fetch preview");
+      }
+
+      const data = await res.json();
+
+      const previewData: URLPreview = {
+        url: data.url || url,
+        status: data.status,
+        contentType: data.contentType,
+        ipv4: data.ipv4 || null,
+        ipv6: data.ipv6 || null,
+        dnsRecords: data.dnsRecords || {
+          A: null,
+          AAAA: null,
+          CNAME: null,
+        },
+        title: data.title ?? null,
+        description: data.description ?? null,
+        image: data.image ?? null,
+        screenshot: data.screenshot ?? null,
+      };
+
+      setPreview(previewData);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load preview. Please check the URL and try again.");
+      setPreview(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDnsRecords = (records: string[] | string[][] | null): string => {
+    if (!records) return "N/A";
+    if (records.length > 0) {
+      return records.flat().join(", ");
+    }
+    return String(records);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 font-sans">
+      <Header />
+      <div className="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h1 className="text-gray-900 mb-4">URL Preview</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Enter any URL to see a preview with its title, description, and
+            image.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+        <URLInput onSubmit={handleSubmit} isLoading={isLoading} />
+
+        {error && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
+        {/* TODO: Display the output nicely */}
+        {preview && (
+          <div className="mt-6">
+            <p className="text-gray-600">URL: {preview.url}</p>
+            <p className="text-gray-600">Status: {preview.status}</p>
+            <p className="text-gray-600">Content Type: {preview.contentType}</p>
+            <p className="text-gray-600">IPv4: {preview.ipv4 || "N/A"}</p>
+            <p className="text-gray-600">IPv6: {preview.ipv6 || "N/A"}</p>
+            <div className="mt-4">
+              <h3 className="text-gray-800 font-semibold mb-2">DNS Records:</h3>
+              <ul className="list-disc list-inside">
+                {Object.entries(preview.dnsRecords).map(([type, records]) => (
+                  <li key={type} className="text-gray-600">
+                    {type}: {formatDnsRecords(records)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <p className="text-gray-600">Title: {preview.title}</p>
+            <p className="text-gray-600">Description: {preview.description}</p>
+            {preview.image && (
+              <>
+                <p className="text-gray-600">Image:</p>
+                <img src={preview.image} alt="Image" />
+              </>
+            )}
+            {preview.screenshot && (
+              <>
+                <p className="text-gray-600">Screenshot:</p>
+                <img src={preview.screenshot} alt="Screenshot" />
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
