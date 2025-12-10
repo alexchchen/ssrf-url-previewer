@@ -1,4 +1,5 @@
 import { LogIn } from "lucide-react";
+import Link from "next/link";
 
 export function Header() {
   return (
@@ -13,10 +14,10 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer">
+            <Link href="/login" className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer">
               <LogIn className="w-4 h-4" />
               <span>Login</span>
-            </button>
+            </Link>
           </div>
         </div>
       </div>
