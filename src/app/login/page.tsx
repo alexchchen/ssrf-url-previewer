@@ -15,7 +15,7 @@ export default function LoginPage() {
         e.preventDefault();
         setError("");
         setIsLoading(true);
-
+        // try to log the user in using login API 
         try {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
@@ -26,7 +26,7 @@ export default function LoginPage() {
             });
 
             const data = await res.json();
-
+            // login fails
             if (!res.ok) {
                 setError(data.error || "Login failed");
                 return;
@@ -40,6 +40,7 @@ export default function LoginPage() {
             setIsLoading(false);
         }
     }
+    // setting up login form
     return (
         <div className="min-h-screen flex items-center justify-center bg-blue-50">
             <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">

@@ -1,14 +1,17 @@
 "use client";
 
-import { LogIn, UserPlus, User, LogOut, ChevronDown } from "lucide-react";
+import { LogIn, UserPlus, User, LogOut, ChevronDown, Home } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
+  // Function to check authentication status so that header is correctly rendered
   const checkAuth = async () => {
     try {
       const res = await fetch('/api/auth/me');
@@ -20,10 +23,10 @@ export function Header() {
   };
 
   useEffect(() => {
-    // Check auth on mount
+    // Check auth when component mounts page loads 
     checkAuth();
 
-    // Check auth periodically to catch login/logout changes
+    // contionusly check auth every 2 seconds to ensure state is up to date
     const interval = setInterval(checkAuth, 2000);
 
     return () => clearInterval(interval);
@@ -41,6 +44,7 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // show header based on authentication status
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -51,7 +55,7 @@ export function Header() {
             </div>
             <span className="text-gray-900">URL Preview</span>
           </Link>
-
+          {/* if the user is logged in it will show this header */}
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <div className="relative" ref={dropdownRef}>
@@ -63,19 +67,32 @@ export function Header() {
                   <span>Account</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+                {/* if the user is logged in depending on page they are on header will update accordingly (account and home page) */}
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    <Link
-                      href="/account"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        <span>My Account</span>
-                      </div>
-                    </Link>
+                    {pathname === '/account' ? (
+                      <Link
+                        href="/"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Home className="w-4 h-4" />
+                          <span>Home</span>
+                        </div>
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/account"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          <span>My Account</span>
+                        </div>
+                      </Link>
+                    )}
                     <Link
                       href="/logout"
                       className="block px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
@@ -91,6 +108,7 @@ export function Header() {
               </div>
             ) : (
               <>
+              {/* if the user is not logged in it will show this header */}
                 <Link href="/signup" className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 hover:scale-105 transition-all cursor-pointer">
                   <UserPlus className="w-4 h-4" />
                   <span>Sign Up</span>
