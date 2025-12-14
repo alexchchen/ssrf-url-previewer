@@ -13,14 +13,16 @@ export default function AccountPage() {
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-
+  // get user's search history from history API route
   useEffect(() => {
     const fetchHistory = async () => {
+      // try to fetch search history
       try {
         const res = await fetch("/api/history");
         if (!res.ok) {
           throw new Error("Failed to fetch history");
         }
+        // set history state
         const data = await res.json();
         setHistory(data.history);
       } catch (err) {
@@ -29,10 +31,10 @@ export default function AccountPage() {
         setIsLoading(false);
       }
     };
-
+    // fetch history on component mount
     fetchHistory();
   }, []);
-
+// render account page with search history
   return (
     <div className="min-h-screen bg-blue-50">
       <Header />

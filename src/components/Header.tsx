@@ -11,6 +11,7 @@ export function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
+  // Function to check authentication status so that header is correctly rendered
   const checkAuth = async () => {
     try {
       const res = await fetch('/api/auth/me');
@@ -22,10 +23,10 @@ export function Header() {
   };
 
   useEffect(() => {
-    // Check auth on mount
+    // Check auth when component mounts page loads 
     checkAuth();
 
-    // Check auth periodically to catch login/logout changes
+    // contionusly check auth every 2 seconds to ensure state is up to date
     const interval = setInterval(checkAuth, 2000);
 
     return () => clearInterval(interval);
@@ -43,6 +44,7 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // show header based on authentication status
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -53,7 +55,7 @@ export function Header() {
             </div>
             <span className="text-gray-900">URL Preview</span>
           </Link>
-
+          {/* if the user is logged in it will show this header */}
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <div className="relative" ref={dropdownRef}>
@@ -65,7 +67,7 @@ export function Header() {
                   <span>Account</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+                {/* if the user is logged in depending on page they are on header will update accordingly (account and home page) */}
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                     {pathname === '/account' ? (
@@ -106,6 +108,7 @@ export function Header() {
               </div>
             ) : (
               <>
+              {/* if the user is not logged in it will show this header */}
                 <Link href="/signup" className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 hover:scale-105 transition-all cursor-pointer">
                   <UserPlus className="w-4 h-4" />
                   <span>Sign Up</span>

@@ -16,14 +16,14 @@ export default function SignupPage() {
     e.preventDefault();
     setError("");
 
-    // Validate passwords match
+    // confirm password and make sure they match
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-
+    // loading state
     setIsLoading(true);
-
+    // try to sign up user using signup API route
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -34,7 +34,7 @@ export default function SignupPage() {
       });
 
       const data = await res.json();
-
+      // if signup fails show error message
       if (!res.ok) {
         setError(data.error || "Signup failed");
         return;
@@ -48,7 +48,7 @@ export default function SignupPage() {
       setIsLoading(false);
     }
   };
-
+  // setting up login form
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">

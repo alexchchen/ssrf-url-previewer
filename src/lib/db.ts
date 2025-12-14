@@ -5,7 +5,7 @@ import path from 'path';
 const dbPath = path.join(process.cwd(), 'database.sqlite');
 const db = new Database(dbPath);
 
-// Create users table
+// Create users table with id (primary key for database), unique email, hashed password, and timestamp of when account is created
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,7 +15,7 @@ db.exec(`
   )
 `);
 
-// Create search history table
+// Create search history table with primary key, user id (foreign key referencing users table to reference user by unique id), url, and timestamp of when the search was made
 db.exec(`
   CREATE TABLE IF NOT EXISTS search_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
