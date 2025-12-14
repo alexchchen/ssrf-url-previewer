@@ -14,16 +14,17 @@ export function Header() {
   // Function to check authentication status so that header is correctly rendered
   const checkAuth = async () => {
     try {
-      const res = await fetch('/api/auth/me');
+      const res = await fetch("/api/auth/me");
       const data = await res.json();
       setIsLoggedIn(data.isAuthenticated);
     } catch (error) {
+      console.log("Error checking auth status:", error);
       setIsLoggedIn(false);
     }
   };
 
   useEffect(() => {
-    // Check auth when component mounts page loads 
+    // Check auth when component mounts page loads
     checkAuth();
 
     // contionusly check auth every 2 seconds to ensure state is up to date
@@ -35,13 +36,16 @@ export function Header() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // show header based on authentication status
@@ -65,12 +69,16 @@ export function Header() {
                 >
                   <User className="w-4 h-4" />
                   <span>Account</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${
+                      isDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
                 {/* if the user is logged in depending on page they are on header will update accordingly (account and home page) */}
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    {pathname === '/account' ? (
+                    {pathname === "/account" ? (
                       <Link
                         href="/"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
@@ -108,12 +116,18 @@ export function Header() {
               </div>
             ) : (
               <>
-              {/* if the user is not logged in it will show this header */}
-                <Link href="/signup" className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 hover:scale-105 transition-all cursor-pointer">
+                {/* if the user is not logged in it will show this header */}
+                <Link
+                  href="/signup"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 hover:scale-105 transition-all cursor-pointer"
+                >
                   <UserPlus className="w-4 h-4" />
                   <span>Sign Up</span>
                 </Link>
-                <Link href="/login" className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 hover:scale-105 transition-all cursor-pointer">
+                <Link
+                  href="/login"
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 hover:scale-105 transition-all cursor-pointer"
+                >
                   <LogIn className="w-4 h-4" />
                   <span>Login</span>
                 </Link>
