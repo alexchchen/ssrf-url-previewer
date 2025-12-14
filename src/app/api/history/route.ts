@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get user's search history, ordered by most recent first
+    // Get users search history
     const history = db
       .prepare(`
         SELECT id, url, searched_at
