@@ -14,9 +14,7 @@ export function URLInput({ onSubmit, isLoading }: URLInputProps) {
 
     if (!url.trim()) return;
 
-    const formattedURL = url.match(/^https?:\/\//) ? url : `https://${url}`;
-
-    onSubmit(formattedURL);
+    onSubmit(url);
   };
 
   return (
