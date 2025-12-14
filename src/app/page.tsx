@@ -4,13 +4,18 @@
 import { Header } from "@/components/Header";
 import { URLInput } from "@/components/URLInput";
 import { useState } from "react";
+import { cacheTag } from 'next/dist/server/use-cache/cache-tag';
 
 type URLPreview = {
-  url: string;
+  hostname: string;
+  effectiveURL: string;
   status: number;
   contentType: string;
   ipv4: string | null;
   ipv6: string | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
   dnsRecords: Record<string, string[] | string[][] | null>;
   title: string | null;
   description: string | null;
@@ -44,11 +49,15 @@ export default function Home() {
       const data = await res.json();
 
       const previewData: URLPreview = {
-        url: data.url || url,
+        hostname: data.hostname,
+        effectiveURL: data.effectiveURL,
         status: data.status,
         contentType: data.contentType,
         ipv4: data.ipv4 || null,
         ipv6: data.ipv6 || null,
+        city: data.city || null,
+        region: data.region || null,
+        country: data.country || null,
         dnsRecords: data.dnsRecords || {
           A: null,
           AAAA: null,
@@ -78,6 +87,19 @@ export default function Home() {
     return String(records);
   };
 
+  const countryFlag = (country?: string | null): string => {
+    if (!country) return "";
+    // If country is an ISO alpha-2 code (e.g. "US"), use it directly.
+    // Otherwise try to extract a 2-letter code from common formats like "United States (US)".
+    const code =
+      country.trim().length === 2
+        ? country.trim()
+        : country.match(/\(([A-Za-z]{2})\)/)?.[1] ?? country.match(/\b([A-Za-z]{2})\b/)?.[1] ?? "";
+    if (!code) return "";
+    const points = Array.from(code.toUpperCase()).map((ch) => 0x1F1E6 + ch.charCodeAt(0) - 65);
+    return String.fromCodePoint(...points);
+  };
+  
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 font-sans">
       <Header />
@@ -100,35 +122,52 @@ export default function Home() {
         {/* TODO: Display the output nicely */}
         {preview && (
           <div className="mt-6">
-            <p className="text-gray-600">URL: {preview.url}</p>
-            <p className="text-gray-600">Status: {preview.status}</p>
-            <p className="text-gray-600">Content Type: {preview.contentType}</p>
-            <p className="text-gray-600">IPv4: {preview.ipv4 || "N/A"}</p>
-            <p className="text-gray-600">IPv6: {preview.ipv6 || "N/A"}</p>
-            <div className="mt-4">
-              <h3 className="text-gray-800 font-semibold mb-2">DNS Records:</h3>
-              <ul className="list-disc list-inside">
-                {Object.entries(preview.dnsRecords).map(([type, records]) => (
-                  <li key={type} className="text-gray-600">
-                    {type}: {formatDnsRecords(records)}
-                  </li>
-                ))}
-              </ul>
+              <div className="row">
+                <h1 className="top break-all text-gray-600">
+                  <span id="primaryHostname"> {preview.hostname} </span>
+                </h1>
+                <br className="" />
+              </div>
+              <div className="row">
+                <div className="text-gray-600">
+                  <b>Effective URL:</b>
+                  <span>{" " + preview.effectiveURL}</span>
+                </div>
+              </div>
+            <div className="flex flex-col md:flex-row gap-6 mt-6">
+               <div className="w-full md:w-1/2">
+                 <h4 className="text-xl font-bold mb-4 text-gray-600">Summary</h4> 
+                 <p className="text-gray-600"><span className="font-semibold">Description:</span> {preview.description}</p>
+                 <p className="text-gray-600"><span className="font-semibold">Status:</span> {preview.status}</p>
+                 <p className="text-gray-600"><span className="font-semibold">Content Type:</span> {preview.contentType}</p>
+                 <p className="text-gray-600"><span className="font-semibold">IPv4:</span> {preview.ipv4 || "N/A"} {countryFlag(preview.country)}</p>
+                 <p className="text-gray-600"><span className="font-semibold">IPv6:</span> {preview.ipv6 || "N/A"} {countryFlag(preview.country)}</p>
+                 <h4 className="text-gray-800 font-semibold mb-2">DNS Records:</h4>
+                 <ul className="list-disc list-inside">
+                  {Object.entries(preview.dnsRecords).map(([type, records]) => (
+                    <li key={type} className="text-gray-600">
+                      {type}: {formatDnsRecords(records)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="w-full md:w-1/2">
+                <h4 className="text-xl font-bold mb-4 text-gray-600">Screenshot</h4>
+                {preview.screenshot && (
+                  <img 
+                    src={preview.screenshot} 
+                    alt="Screenshot"
+                    className="w-full h-auto rounded-lg shadow"
+                  />
+                )}
+                <h4 className="text-xl font-bold mb-4 text-gray-600">Page Title</h4>
+                <p className="text-gray-600">{preview.title}</p>
+              </div>
             </div>
-            <p className="text-gray-600">Title: {preview.title}</p>
-            <p className="text-gray-600">Description: {preview.description}</p>
-            {preview.image && (
-              <>
-                <p className="text-gray-600">Image:</p>
-                <img src={preview.image} alt="Image" />
-              </>
-            )}
-            {preview.screenshot && (
-              <>
-                <p className="text-gray-600">Screenshot:</p>
-                <img src={preview.screenshot} alt="Screenshot" />
-              </>
-            )}
+            
+            <div className="mt-4">
+
+            </div>
           </div>
         )}
       </div>

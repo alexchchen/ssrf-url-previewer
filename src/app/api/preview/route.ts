@@ -5,6 +5,7 @@ import dns from "dns/promises";
 import { cookies } from "next/headers";
 import db from "@/lib/db";
 
+
 const SCREENSHOT_WIDTH = 1800;
 const SCREENSHOT_HEIGHT = 992;
 const NAVIGATION_TIMEOUT_MS = 15000;
@@ -40,7 +41,8 @@ export async function POST(request: NextRequest) {
       method: "GET",
       redirect: "follow",
     });
-
+   
+    
     const contentType = response.headers.get("content-type") || "";
 
     if (!contentType.includes("text/html")) {
@@ -61,17 +63,24 @@ export async function POST(request: NextRequest) {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    const ogTitle = $('meta[property="og:title"]').attr("content");
-    const ogDescription = $('meta[property="og:description"]').attr("content");
+    //const ogTitle = $('meta[property="og:title"]').attr("content");
+    //const ogDescription = $('meta[property="og:description"]').attr("content");
     const ogImage = $('meta[property="og:image"]').attr("content");
 
-    const title = ogTitle || $("title").first().text() || null;
-    const description =
-      ogDescription || $('meta[name="description"]').attr("content") || null;
+    //const title = ogTitle || $("title").first().text() || null;
+    // const description =
+    //  ogDescription || $('meta[name="description"]').attr("content") || null;
     const image =
       ogImage || $('meta[name="twitter:image"]').attr("content") || null;
 
     let screenshot: string | null = null;
+    let effectiveURL: string | null = null;
+    let title : string | null = null;
+    let description: string | null = null;
+    let city: string | null = null;
+    let region: string | null = null;
+    let country: string | null = null;
+    
     try {
       const browser = await puppeteer.launch({
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -91,6 +100,23 @@ export async function POST(request: NextRequest) {
           type: "png",
         })) as Buffer;
         screenshot = `data:image/png;base64,${buffer.toString("base64")}`;
+        effectiveURL = page.url();
+        const metadata = await page.evaluate(() => {
+        const titleSelector = `meta[property="og:title"]`;
+        const ogTitleTag = document.querySelector(titleSelector);
+        if (ogTitleTag)
+          title = ogTitleTag.getAttribute('content');
+
+        const descSelector = `meta[property="og:description"]`;
+        const ogDescTag = document.querySelector(descSelector);
+
+        if (ogDescTag)
+          description = ogDescTag.getAttribute('content');
+        return { title, description };
+      });
+      title = metadata.title || null;
+      description = metadata.description || null;
+        
       } finally {
         await browser.close();
       }
@@ -103,11 +129,35 @@ export async function POST(request: NextRequest) {
     let ipv6 = null;
     try {
       ipv4 = (await dns.lookup(url.hostname, { family: 4 })).address;
-    } catch {}
+    } catch (error) {
+      console.error('DNS lookup failed:', error);
+    }
     try {
       ipv6 = (await dns.lookup(url.hostname, { family: 6 })).address;
-    } catch {}
+    } catch (error) {
+      console.error('DNS lookup failed:', error);
+    }
+    if (ipv4) {
+    try {
+      const ipinfoToken = process.env.IPINFO_API_KEY;
+      const ipinfoUrl = ipinfoToken 
+        ? `https://ipinfo.io/${ipv4}/json?token=${ipinfoToken}`
+        : `https://ipinfo.io/${ipv4}/json`;
+      const geoResponse = await fetch(ipinfoUrl);
+      const geoData = await geoResponse.json();
 
+      city = geoData.city;
+      region = geoData.region;
+      country = geoData.country;
+      console.log(geoData);
+      // number: geoData.asn,
+      //  organization: geoData.org
+    } catch (error) {
+      console.error('Geolocation lookup failed:', error);
+    }
+  }
+  console.log(`https://ipapi.co/${ipv4}/json/`);
+  console.log("city ", city, " region ", region, " country ", country);
     const dnsRecords: Record<string, string[] | string[][] | null> = {
       A: null,
       AAAA: null,
@@ -121,15 +171,21 @@ export async function POST(request: NextRequest) {
     } catch {}
     try {
       dnsRecords.CNAME = await dns.resolveCname(url.hostname);
-    } catch {}
+    } catch (error) {
+      console.log('CNAME lookup failed:', error);
+    }
 
     return NextResponse.json(
       {
-        url: url.toString(),
+        hostname: url.hostname,
+        effectiveURL, 
         status: response.status,
         contentType,
         ipv4,
         ipv6,
+        city,
+        region,
+        country,
         dnsRecords,
         title,
         description,
