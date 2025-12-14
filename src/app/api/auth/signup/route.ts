@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
+    // Check if user already exists in db
     const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
     if (existingUser) {
       return NextResponse.json(

@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
 
-    // Validate input
+    // validate user input for logging in
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user
+    // see if the user already exists in the database
     const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as any;
     if (!user) {
       return NextResponse.json(
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify password
+    // compare password with hashed password in database
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create session
+    // start user session by setting a cookie
     const response = NextResponse.json(
       { 
         message: 'Login successful',
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Set cookie to track user session
+    // set httpOnly cookie for user session
     response.cookies.set('userId', user.id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

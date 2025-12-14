@@ -22,7 +22,7 @@ export default function AccountPage() {
         if (!res.ok) {
           throw new Error("Failed to fetch history");
         }
-        // set history state
+        // set history state based on response data
         const data = await res.json();
         setHistory(data.history);
       } catch (err) {
@@ -44,7 +44,6 @@ export default function AccountPage() {
           
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Search History</h2>
-            
             {isLoading ? (
               <div className="bg-gray-50 rounded-lg p-6 text-center">
                 <p className="text-gray-600">Loading...</p>
@@ -57,6 +56,7 @@ export default function AccountPage() {
               <div className="bg-gray-50 rounded-lg p-6 text-center">
                 <p className="text-gray-600">No search history yet. Start by searching for a URL!</p>
               </div>
+              // if history is found we need to map it and display it in a list
             ) : (
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <ul className="divide-y divide-gray-200">
@@ -72,6 +72,7 @@ export default function AccountPage() {
                           {item.url}
                         </a>
                         <span className="text-sm text-gray-500 ml-4 whitespace-nowrap">
+                          {/* set local time */}
                           {new Date(item.searched_at + ' UTC').toLocaleString()}
                         </span>
                       </div>
