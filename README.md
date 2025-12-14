@@ -4,6 +4,10 @@ Install dependencies:
 
 ```bash
 npm install
+npm install better-sqlite3
+npm install --save-dev @types/better-sqlite3
+npm install bcryptjs
+npm install --save-dev @types/bcryptjs
 ```
 
 Start the development server:
