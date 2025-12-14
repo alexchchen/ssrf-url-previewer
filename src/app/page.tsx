@@ -85,8 +85,7 @@ export default function Home() {
         <div className="text-center mb-12">
           <h1 className="text-gray-900 mb-4">URL Preview</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Enter any URL to see a preview with its title, description, and
-            image.
+            Enter any URL to see a preview with its title, description, and image.
           </p>
         </div>
 
