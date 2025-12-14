@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import puppeteer from "puppeteer";
 import dns from "dns/promises";
+import { cookies } from "next/headers";
+import db from "@/lib/db";
 
 const SCREENSHOT_WIDTH = 1800;
 const SCREENSHOT_HEIGHT = 992;
@@ -19,6 +21,20 @@ export async function POST(request: NextRequest) {
     }
 
     const url = new URL(rawUrl);
+
+    // Save to search history if user is logged in
+    const cookieStore = await cookies();
+    const userId = cookieStore.get('userId');
+    if (userId) {
+      try {
+        db.prepare('INSERT INTO search_history (user_id, url) VALUES (?, ?)').run(
+          userId.value,
+          url.toString()
+        );
+      } catch (error) {
+        console.error('Failed to save search history:', error);
+      }
+    }
 
     const response = await fetch(url.toString(), {
       method: "GET",

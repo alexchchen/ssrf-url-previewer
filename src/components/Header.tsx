@@ -1,13 +1,15 @@
 "use client";
 
-import { LogIn, UserPlus, User, LogOut, ChevronDown } from "lucide-react";
+import { LogIn, UserPlus, User, LogOut, ChevronDown, Home } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   const checkAuth = async () => {
     try {
@@ -66,16 +68,29 @@ export function Header() {
                 
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    <Link
-                      href="/account"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        <span>My Account</span>
-                      </div>
-                    </Link>
+                    {pathname === '/account' ? (
+                      <Link
+                        href="/"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Home className="w-4 h-4" />
+                          <span>Home</span>
+                        </div>
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/account"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          <span>My Account</span>
+                        </div>
+                      </Link>
+                    )}
                     <Link
                       href="/logout"
                       className="block px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
