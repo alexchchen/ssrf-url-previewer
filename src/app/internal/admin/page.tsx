@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 export default function InternalAdminDebugPage() {
   // Fake data for demonstration purposes
   const fakeEnvVars = [
@@ -16,32 +20,48 @@ export default function InternalAdminDebugPage() {
     internalIp: "10.0.2.14",
   };
 
-  const fakeRecentRequests = [
-    {
-      id: 1,
+  const [recentRequests, setRecentRequests] = useState<
+    Array<{
+      id: number;
+      method: string;
+      path: string;
+      user: string;
+      internalTarget: string;
+      status: number;
+    }>
+  >([]);
+
+  const fetchRecentRequests = async () => {
+    const response = await fetch("/api/admin/recent-requests?limit=50", {
       method: "GET",
-      path: "/api/preview",
-      user: "alice",
-      internalTarget: "http://localhost:3000/internal/admin-debug",
-      status: 200,
-    },
-    {
-      id: 2,
-      method: "GET",
-      path: "/api/preview",
-      user: "bob",
-      internalTarget: "http://10.0.0.5:5432",
-      status: 500,
-    },
-    {
-      id: 3,
-      method: "GET",
-      path: "/api/preview",
-      user: "charlie",
-      internalTarget: "http://169.254.169.254/latest/meta-data/",
-      status: 200,
-    },
-  ];
+    });
+
+    const responseObject = (
+      response.ok ? await response.json() : { recent: [] }
+    ) as {
+      recent?: Array<{
+        id: number;
+        user: string;
+        url: string;
+        searchedAt: string;
+      }>;
+    };
+
+    setRecentRequests(
+      (responseObject.recent ?? []).map((r) => ({
+        id: r.id,
+        method: "GET",
+        path: "/api/preview",
+        user: r.user,
+        internalTarget: r.url,
+        status: 200,
+      }))
+    );
+  };
+
+  useEffect(() => {
+    fetchRecentRequests();
+  }, []);
 
   return (
     <main className="mx-auto my-10 max-w-[900px] p-6 font-sans">
@@ -110,7 +130,7 @@ export default function InternalAdminDebugPage() {
               </tr>
             </thead>
             <tbody>
-              {fakeRecentRequests.map((req) => (
+              {recentRequests.map((req) => (
                 <tr key={req.id}>
                   <td className="border-t border-gray-200 px-2.5 py-2 text-gray-900">
                     {req.id}
