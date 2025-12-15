@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 
 export default function InternalAdminDebugPage() {
-  // Fake data for demonstration purposes
+  // Since this is a simple app, we don't have secrets like these to display.
+  // So these are fake data for demonstration purposes.
   const fakeEnvVars = [
     { key: "NODE_ENV", value: "production" },
     { key: "ADMIN_API_KEY", value: "supersecret-admin-key-123" },
@@ -11,7 +12,6 @@ export default function InternalAdminDebugPage() {
     { key: "DB_PASSWORD", value: "P@ssw0rd!" },
     { key: "INTERNAL_SERVICE_URL", value: "http://10.0.2.14:9000" },
   ];
-
   const fakeSystemInfo = {
     version: "1.4.0",
     build: "debug",
@@ -31,6 +31,7 @@ export default function InternalAdminDebugPage() {
     }>
   >([]);
 
+  // Fetch recent requests from the admin API
   const fetchRecentRequests = async () => {
     const response = await fetch("/api/admin/recent-requests?limit=50", {
       method: "GET",

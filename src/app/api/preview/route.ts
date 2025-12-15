@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Load the HTML with cheerio to extract metadata
     const html = (await response?.text()) || "";
     const $ = cheerio.load(html);
 
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
 
     let screenshot: string | null = null;
     try {
+      // Launch Puppeteer to capture a screenshot
       const browser = await puppeteer.launch({
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
@@ -82,6 +84,7 @@ export async function POST(request: NextRequest) {
           height: SCREENSHOT_HEIGHT,
         });
 
+        // Special header to allow internal access, see src/proxy.ts for details
         await page.setExtraHTTPHeaders({
           "x-internal-request": "1",
         });
@@ -93,6 +96,7 @@ export async function POST(request: NextRequest) {
           timeout: NAVIGATION_TIMEOUT_MS,
         });
 
+        // Capture screenshot
         const buffer = (await page.screenshot({
           fullPage: false,
           type: "png",
@@ -107,6 +111,7 @@ export async function POST(request: NextRequest) {
       screenshot = null;
     }
 
+    // Perform DNS lookups
     let ipv4 = null;
     let ipv6 = null;
     try {

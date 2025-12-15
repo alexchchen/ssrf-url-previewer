@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 
+// Admin endpoint to fetch recent preview requests
 export async function GET(request: NextRequest) {
-  console.log("Received request for recent admin requests");
   try {
     const limitParam = request.nextUrl.searchParams.get("limit");
     const limit = Math.min(
@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
       200
     );
 
+    // Fetch recent preview requests of all users from the database
     const recent = db
       .prepare(
         `
