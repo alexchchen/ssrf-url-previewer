@@ -1,6 +1,14 @@
 "use client";
 
-import { LogIn, UserPlus, User, LogOut, ChevronDown, Home } from "lucide-react";
+import {
+  LogIn,
+  UserPlus,
+  User,
+  LogOut,
+  ChevronDown,
+  Home,
+  LinkIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
@@ -55,7 +63,7 @@ export function Header() {
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-linear-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white">🔗</span>
+              <LinkIcon className="w-5 h-5 text-white" />
             </div>
             <span className="text-gray-900">URL Preview</span>
           </Link>
