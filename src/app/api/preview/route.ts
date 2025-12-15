@@ -23,18 +23,20 @@ export async function POST(request: NextRequest) {
 
     const url = new URL(rawUrl);
 
-    // Save to search history if user is logged in
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('userId');
-    if (userId) {
-      try {
-        db.prepare('INSERT INTO search_history (user_id, url) VALUES (?, ?)').run(
-          userId.value,
-          url.toString()
-        );
-      } catch (error) {
-        console.error('Failed to save search history:', error);
-      }
+    let response;
+    try {
+      // Vulnerability: Node fetch will fail if the URL is not HTTP/HTTPS,
+      // but since we don't return immediately after this check,
+      // SSRF to other protocols is still possible via Puppeteer.
+      response = await fetch(url.toString(), {
+        method: "GET",
+        redirect: "follow",
+        headers: {
+          "x-internal-request": "1",
+        },
+      });
+    } catch (error) {
+      console.error("Fetch error:", error);
     }
 
     const response = await fetch(url.toString(), {
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
         {
           url: url.toString(),
           contentType,
-          status: response.status,
+          status: response?.status,
           title: null,
           description: null,
           image: null,
@@ -60,7 +62,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const html = await response.text();
+    // Load the HTML with cheerio to extract metadata
+    const html = (await response?.text()) || "";
     const $ = cheerio.load(html);
 
     //const ogTitle = $('meta[property="og:title"]').attr("content");
@@ -82,23 +85,37 @@ export async function POST(request: NextRequest) {
     let country: string | null = null;
     
     try {
+      // Launch Puppeteer to capture a screenshot
       const browser = await puppeteer.launch({
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
+
       try {
         const page = await browser.newPage();
+
         await page.setViewport({
           width: SCREENSHOT_WIDTH,
           height: SCREENSHOT_HEIGHT,
         });
+
+        // Special header to allow internal access, see src/proxy.ts for details
+        await page.setExtraHTTPHeaders({
+          "x-internal-request": "1",
+        });
+
+        // Vulnerability: Puppeteer spins up a browser that can navigate to arbitrary URLs,
+        // including file:// URLs and internal network addresses.
         await page.goto(url.toString(), {
           waitUntil: "networkidle2",
           timeout: NAVIGATION_TIMEOUT_MS,
         });
+
+        // Capture screenshot
         const buffer = (await page.screenshot({
           fullPage: false,
           type: "png",
         })) as Buffer;
+
         screenshot = `data:image/png;base64,${buffer.toString("base64")}`;
         effectiveURL = page.url();
         const metadata = await page.evaluate(() => {
@@ -125,6 +142,7 @@ export async function POST(request: NextRequest) {
       screenshot = null;
     }
 
+    // Perform DNS lookups
     let ipv4 = null;
     let ipv6 = null;
     try {
@@ -173,6 +191,19 @@ export async function POST(request: NextRequest) {
       dnsRecords.CNAME = await dns.resolveCname(url.hostname);
     } catch (error) {
       console.log('CNAME lookup failed:', error);
+    }
+
+    // Save to search history if user is logged in
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("userId");
+    if (userId) {
+      try {
+        db.prepare(
+          "INSERT INTO search_history (user_id, url) VALUES (?, ?)"
+        ).run(userId.value, url.toString());
+      } catch (error) {
+        console.error("Failed to save search history:", error);
+      }
     }
 
     return NextResponse.json(

@@ -12,9 +12,14 @@ export function URLInput({ onSubmit, isLoading }: URLInputProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
-    if (!url.trim()) return;
+    const trimmed = url.trim();
 
-    const formattedURL = url.match(/^https?:\/\//) ? url : `https://${url}`;
+    if (!trimmed) return;
+
+    // Vulnerability: Only prepends "https://" if no protocol is present.
+    // This allows SSRF via other protocols like "file://".
+    const hasProtocol = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed);
+    const formattedURL = hasProtocol ? trimmed : `https://${trimmed}`;
 
     onSubmit(formattedURL);
   };
